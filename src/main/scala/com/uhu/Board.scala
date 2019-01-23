@@ -7,12 +7,18 @@ case class ConditionalBoard(fitArray: Array[Boolean])
 
 object Board {
 
-  val HEIGHT = 24
-  val WIDTH = 12
+  val HEIGHT = 22
+  val WIDTH = 10
+  val WALL = 9
+  val EMPTY = 0
+
+  val DEFAULT_COLUMN = 4
 
   trait BoardParser {
     def parseBoard(serializedBoard: String): Board = {
-      Board(serializedBoard.map(_.toInt).toArray.grouped(HEIGHT).toArray)
+      val boardData = serializedBoard.map(_.toInt).filterNot(_ == WALL).toArray.grouped(HEIGHT).toArray
+      println(boardData.map(_.length))
+      Board(boardData)
     }
   }
 
@@ -25,15 +31,25 @@ object Board {
   }
 
   def simpleProjection(b: Board): SimpleBoard = {
-    def computeHeight: Seq[Int] => Int = ???
-
-    val values = b.values.map(computeHeight.compose(_.toSeq))
+    val values = b.values.map(columnHeight)
     SimpleBoard(values)
   }
 
-  def conditionalProjection(b: Board, figure: Int): ConditionalBoard = {
-    def computeFit: Board => Int => Boolean = ???
+  def conditionalProjection(board: Board, figure: Figure): ConditionalBoard = {
+      def filterBelowColumns(board: Board, figure: Figure, move: Int): Array[Array[Int]] = {
+        val start = DEFAULT_COLUMN - move
+        val end = start + figure.width
+        board.values.slice(start, end)
+      }
 
-    ConditionalBoard((0 to Board.WIDTH).map(computeFit(b)).toArray)
+      def executeMove: Board => Figure => Int => Boolean = b => f => m => {
+        val belowColumns = filterBelowColumns(b, f, m).map(columnHeight)
+        val newHeights = Figure.computeNewHeights(belowColumns, f)
+        newHeights.exists(_ > b.values.map(columnHeight).max)
+      }
+
+    ConditionalBoard(figure.moves.map(executeMove(board)(figure)))
   }
+
+  def columnHeight: Array[Int] => Int = _.dropWhile(_ == EMPTY).length
 }

@@ -1,12 +1,15 @@
 package com.uhu.app.auxiliar;
 
+import com.uhu.EndMessage;
+import com.uhu.Message;
+
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
 
-public abstract class Jugador {
+public abstract class Jugador implements Message.MessageParser {
 	
 	private int PUERTO_ENVIO = 4567;
 	private int PUERTO_RECEP = 5678;
@@ -38,10 +41,21 @@ public abstract class Jugador {
 				String percepcion = new String(peticion.getData(), 0, peticion.getLength()); 
 			 
 				// PENSAR
-				Respuesta accion = pensar(percepcion);
+				Message msg = parseMessage(percepcion);
+				System.out.println(msg.getClass());
+				if (msg.getClass() == EndMessage.class) {
+					System.out.println("final de la partida. Arrancando de nuevo");
+					arrancar();
+				}
+				else {
+                    Respuesta accion = pensar(msg);
 
-				// ACTUAR
-				if (accion != null) enviar(accion.toString());
+                    // ACTUAR
+                    if (accion != null){
+                    	enviar(accion.toString());
+						enviar("CAER");
+					}
+				}
 			 }
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
@@ -51,7 +65,7 @@ public abstract class Jugador {
 		socketUDP.close();
 	}
 	
-	public abstract Respuesta pensar(String percepcion);
+	public abstract Respuesta pensar(Message percepcion);
 
 	private void enviar(String mm) {
 		try {
