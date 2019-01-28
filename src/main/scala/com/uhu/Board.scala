@@ -17,7 +17,6 @@ object Board {
   trait BoardParser {
     def parseBoard(serializedBoard: String): Board = {
       val boardData = serializedBoard.map(_.toInt).filterNot(_ == WALL).toArray.grouped(HEIGHT).toArray
-      println(boardData.map(_.length))
       Board(boardData)
     }
   }

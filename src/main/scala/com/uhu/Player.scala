@@ -13,6 +13,7 @@ trait Player { mp: MessageParser =>
 
   def init(): Unit
   def think(perception: Message): Respuesta
+  def restartPolicy(): Boolean
 
   val SEND_PORT = 4567
   val RECEIVE_PORT = 5678
@@ -31,18 +32,21 @@ trait Player { mp: MessageParser =>
         val percepcion = new String(peticion.getData, 0, peticion.getLength)
 
         // PENSAR
-        val accion = think(parseMessage(percepcion))
+        val message = parseMessage(percepcion)
 
-        // ACTUAR
-        send(accion.toString)
-        //send("CAER")
+        message match {
+          case m: MovMessage =>
+            send(think(m).toString)
+            send("CAER")
+          case m: EndMessage => if (restartPolicy()) start() else println("End of the Game")
+          case m: BadMessage => throw new Exception(s"Bad Message: ${m.msg}")
+        }
       }
     }
   }
 
   def start(): Unit ={
     val startMessage = s"start;$LOGIN;$NAME;"
-    println(s"startin with $startMessage")
     send(startMessage)
   }
 
