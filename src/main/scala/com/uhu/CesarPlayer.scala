@@ -1,11 +1,14 @@
 package com.uhu
 
 import com.uhu.Message.MessageParser
-import com.uhu.app.auxiliar.{Jugador, Respuesta}
+import com.uhu.app.auxiliar.Respuesta
 
 import scala.util.Random
 
-class CesarPlayer extends Jugador("cesarantonio.enrique", "Cesar") with MessageParser {
+class CesarPlayer extends Player with MessageParser {
+
+  override val NAME = "Cesar"
+  override val LOGIN = "cesarantonio.enrique"
 
   type Action = (Int, Int)
   type Policy = Seq[(Action, Float)] => Action
@@ -18,21 +21,23 @@ class CesarPlayer extends Jugador("cesarantonio.enrique", "Cesar") with MessageP
   var firstMove = true
   var lastMove: QFunctionKey = (ConditionalBoard(Array.fill(Board.WIDTH - 1)(false)), (0, 0))
 
-  override def inicializar(): Unit = {}
+  override def init(): Unit = {}
 
-  override def pensar(percepcion: Message): Respuesta = {
+  override def think(percepcion: Message): Respuesta = {
 
     def onPolicy: Policy = actions => {
       val choice = Random.shuffle(actions).maxBy(_._2)._1
       println(choice)
       choice
     }
+
     def randomPolicy: Policy = actions => {
       val choice = Random.shuffle(actions).headOption.map(_._1).getOrElse(0 -> 0)
       println(choice)
       choice
     }
-    def eGreedy: Policy =  if (Random.nextFloat() > 0.2) onPolicy else randomPolicy
+
+    def eGreedy: Policy = if (Random.nextFloat() > 0.2) onPolicy else randomPolicy
 
     val nextAction = percepcion match {
       case MovMessage(current, _, _, clearedRows, board) =>
@@ -55,12 +60,12 @@ class CesarPlayer extends Jugador("cesarantonio.enrique", "Cesar") with MessageP
     new Respuesta(nextAction._1, nextAction._2)
   }
 
-  def train(policy: Policy)(qFunction: QFunction,lastMove: QFunctionKey, figure: Figure, clearedRows: Int, board: ConditionalBoard): (QFunction, Action) = {
+  def train(policy: Policy)(qFunction: QFunction, lastMove: QFunctionKey, figure: Figure, clearedRows: Int, board: ConditionalBoard): (QFunction, Action) = {
 
     def reward(rows: Int): Int = if (rows == 0) 0 else if (rows == 1) 1 else if (rows == 2) 3 else if (rows == 3) 5 else 8
 
     def bestActionValue(qf: QFunction, b: ConditionalBoard): QFunctionValue = {
-      val maybeEmpty = qFunction.filter{ case ((b, _),_) => b == board }
+      val maybeEmpty = qFunction.filter { case ((b, _), _) => b == board }
       if (maybeEmpty.isEmpty) 0f else maybeEmpty.maxBy(_._2)._2
     }
 
@@ -79,7 +84,7 @@ class CesarPlayer extends Jugador("cesarantonio.enrique", "Cesar") with MessageP
   def play(policy: Policy)(qFunction: QFunction, figure: Figure, board: ConditionalBoard): Action = {
     val keyList = figure.moves.map(_ -> 0)
       .map(action => board -> action)
-      .map{ case k @ (_, a) => a -> qFunction.getOrElse(k, 0f) }
+      .map { case k@(_, a) => a -> qFunction.getOrElse(k, 0f) }
       .toSeq
 
     policy(keyList)
