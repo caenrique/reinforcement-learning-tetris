@@ -35,17 +35,18 @@ object Board {
   }
 
   def conditionalProjection(board: Board, figure: Figure): ConditionalBoard = {
-      def filterBelowColumns(board: Board, figure: Figure, move: Int): Array[Array[Int]] = {
-        val start = DEFAULT_COLUMN - move
-        val end = start + figure.width
-        board.values.slice(start, end)
-      }
+    def filterBelowColumns(board: Board, figure: Figure, move: Int): Array[Array[Int]] = {
+      val start = DEFAULT_COLUMN - move
+      val end = start + figure.width
+      board.values.slice(start, end)
+    }
 
-      def executeMove: Board => Figure => Int => Boolean = b => f => m => {
-        val belowColumns = filterBelowColumns(b, f, m).map(columnHeight)
-        val newHeights = Figure.computeNewHeights(belowColumns, f)
-        newHeights.exists(_ > b.values.map(columnHeight).max)
-      }
+    // TODO: Extend this to use rotation aswell
+    def executeMove: Board => Figure => Int => Boolean = b => f => m => {
+      val belowColumns = filterBelowColumns(b, f, m).map(columnHeight)
+      val newHeights = Figure.computeNewHeights(belowColumns, f)
+      newHeights.exists(_ > b.values.map(columnHeight).max)
+    }
 
     ConditionalBoard(figure.moves.map(executeMove(board)(figure)))
   }

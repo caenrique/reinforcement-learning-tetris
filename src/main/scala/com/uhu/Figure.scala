@@ -2,6 +2,7 @@ package com.uhu
 
 case class Figure(symbol: Int, width: Int, moves: Array[Int], grid: Array[Array[Int]])
 
+// TODO: Load figures from file
 object Figure {
   val SQUARE = Figure(
     symbol = 3,

@@ -2,7 +2,7 @@ package com.uhu
 
 import java.io._
 
-import com.uhu.CesarPlayer.Action
+import com.uhu.Player.Action
 import com.uhu.QFunction.{QFunctionKey, QFunctionValue}
 
 case class QFunction(data: Map[QFunctionKey, QFunctionValue]) {
@@ -51,5 +51,7 @@ object QFunction {
   }
 
   def defaultValue(k: QFunctionKey): QFunctionValue = DEFAULT_VALUE
+
+  def empty: QFunction = QFunction(Map.empty[QFunctionKey, QFunctionValue])
 
 }

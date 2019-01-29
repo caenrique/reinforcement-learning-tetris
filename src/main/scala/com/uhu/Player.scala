@@ -12,7 +12,9 @@ trait Player { mp: MessageParser =>
   val NAME: String
 
   def init(): Unit
+
   def think(perception: Message): Respuesta
+
   def restartPolicy(): Boolean
 
   val SEND_PORT = 4567
@@ -45,7 +47,7 @@ trait Player { mp: MessageParser =>
     }
   }
 
-  def start(): Unit ={
+  def start(): Unit = {
     val startMessage = s"start;$LOGIN;$NAME;"
     send(startMessage)
   }
@@ -61,5 +63,11 @@ trait Player { mp: MessageParser =>
       case e: IOException => println("IO: " + e.getMessage);
     }
   }
+
+}
+
+object Player {
+
+  type Action = (Int, Int)
 
 }
