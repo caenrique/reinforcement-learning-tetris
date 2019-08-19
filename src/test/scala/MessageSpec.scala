@@ -1,5 +1,5 @@
-import com.uhu.Board.BoardParser
-import com.uhu._
+import com.uhu.cesar.tetris.Board.BoardParser
+import com.uhu.cesar.tetris.{BadMessage, Board, EndMessage, Message, MovMessage, RawBoard}
 import org.scalatest.{FlatSpec, Matchers}
 
 class MessageSpec extends FlatSpec with Matchers {
@@ -10,7 +10,8 @@ class MessageSpec extends FlatSpec with Matchers {
     val badMessage = "ohteruser;name;1000"
 
     trait DummyBoardParser extends BoardParser {
-      override def parseBoard(serializedBoard: String): Board = Board(Array.ofDim[Int](Board.WIDTH, Board.HEIGHT))
+      override def parseBoard(serializedBoard: String): RawBoard =
+        RawBoard(Array.ofDim[Int](Board.WIDTH, Board.HEIGHT).map(_.toVector).toVector)
     }
 
     object DummyMessageParser extends Message.MessageParser with DummyBoardParser

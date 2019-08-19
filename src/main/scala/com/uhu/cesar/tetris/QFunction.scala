@@ -1,22 +1,27 @@
-package com.uhu
+package com.uhu.cesar.tetris
 
 import java.io._
 
-import com.uhu.Player.Action
-import com.uhu.QFunction.{QFunctionKey, QFunctionValue}
+import Player.Action
+import QFunction.{QFunctionKey, QFunctionValue}
+
+import scala.util.Random
 
 case class QFunction(data: Map[QFunctionKey, QFunctionValue]) {
 
-  def get(k: QFunctionKey): QFunctionValue = data.getOrElse(k, QFunction.defaultValue(k))
+  def get(k: QFunctionKey): QFunctionValue = data.getOrElse(k, Random.nextFloat)
 
   def update(k: QFunctionKey, v: QFunctionValue): QFunction = QFunction(data.updated(k, v))
 
   def getAll(condition: QFunctionKey => Boolean): Seq[(QFunctionKey, QFunctionValue)] = {
-    data.filter { case (k, v) => condition(k) }.toSeq
+    data.filter { case (k, _) => condition(k) }.toSeq
   }
 
-  def bestActionValue(b: ConditionalBoard): QFunctionValue = {
-    getAll(_._1 == b).map(_._2).reduceOption(_ max _).getOrElse(QFunction.DEFAULT_VALUE)
+  def bestActionValue(board: SimpleBoard): QFunctionValue = {
+    getAll{ case QFunctionKey(b, _, _) => b == board }
+      .map(_._2)
+      .reduceOption(_ max _)
+      .getOrElse(QFunction.DEFAULT_VALUE)
   }
 
 }
@@ -25,7 +30,7 @@ object QFunction {
 
   private val DEFAULT_VALUE = 0f
 
-  type QFunctionKey = (ConditionalBoard, Action)
+  case class QFunctionKey(board: SimpleBoard, figure: Figure, action: Action)
   type QFunctionValue = Float
 
   // TODO: get this file name from config

@@ -1,12 +1,15 @@
-package com.uhu
+package com.uhu.cesar.tetris
 
 import java.io.{Closeable, IOException}
 import java.net.{DatagramPacket, DatagramSocket, InetAddress, SocketException}
 
-import com.uhu.Message.MessageParser
-import com.uhu.app.auxiliar.Respuesta
+import com.uhu.cesar.tetris.Message.MessageParser
+import com.uhu.cesar.tetris.app.Respuesta
+
 
 trait Player { mp: MessageParser =>
+
+  var  numberOfGames = 0
 
   val LOGIN: String
   val NAME: String
@@ -15,7 +18,7 @@ trait Player { mp: MessageParser =>
 
   def think(perception: Message): Respuesta
 
-  def restartPolicy(): Boolean
+  def restart(): Boolean
 
   val SEND_PORT = 4567
   val RECEIVE_PORT = 5678
@@ -40,7 +43,7 @@ trait Player { mp: MessageParser =>
           case m: MovMessage =>
             send(think(m).toString)
             send("CAER")
-          case m: EndMessage => if (restartPolicy()) start() else println("End of the Game")
+          case m: EndMessage => if (restart()) start() else println("End of the Game")
           case m: BadMessage => throw new Exception(s"Bad Message: ${m.msg}")
         }
       }
@@ -48,6 +51,7 @@ trait Player { mp: MessageParser =>
   }
 
   def start(): Unit = {
+    numberOfGames = numberOfGames + 1
     val startMessage = s"start;$LOGIN;$NAME;"
     send(startMessage)
   }
@@ -68,6 +72,17 @@ trait Player { mp: MessageParser =>
 
 object Player {
 
-  type Action = (Int, Int)
+  case class Action(movement: Displacement, rotation: Rotation)
+  object Action {
+    def apply(rotation: Int, column: Int): Action = new Action(Displacement(column), Rotation(rotation))
+  }
+
+  case class Rotation(value: Int) {
+    assert(value >= 0 && value <= 3)
+  }
+
+  case class Displacement(value: Int) {
+    assert(value >= -6 && value <= 6)
+  }
 
 }
