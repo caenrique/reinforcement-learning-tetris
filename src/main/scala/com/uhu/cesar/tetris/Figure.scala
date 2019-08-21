@@ -1,18 +1,18 @@
 package com.uhu.cesar.tetris
 
-import Player.Rotation
+import Player.{Action, Rotation}
 
 case class Figure(symbol: Int, width: Int, moves: Array[Int], grid: Array[Array[Int]])
 
 // TODO: Load figures from file
 object Figure {
   val SQUARE = Figure(
-    symbol = 3,
+    symbol = 7,
     width = 2,
     moves = (-4 to 4).toArray,//.filter(_ % 2 == 0),
     grid = Array(
-      Array(3, 3),
-      Array(3, 3),
+      Array(7, 7),
+      Array(7, 7),
     )
   )
 
@@ -51,16 +51,27 @@ object Figure {
   // TODO: test
   def getCoordinates(f: Figure, r: Rotation, x: Int, y: Int): List[(Int, Int)] = {
 
-    val columns = rotation(f, r).grid.transpose
-    val columnCoords =columns.zipWithIndex.map{ case (_, dx) => (x + dx, y) }.toList
+    val columns = getFigureAsColumns(f, r).grid
+    val columnCoords = columns.indices.map{ dx => (x + dx, y) }.toList
 
     columns.zip(columnCoords).flatMap { case (col, (x, y)) =>
         col.zipWithIndex.filter(_._1 != 0).map { case (_, dy) => (x, y + dy) }
     }.toList
   }
 
-  // TODO: test
-  def computeBelowHeights(f: Figure, r: Rotation, y: Int): Array[Int] = {
-    rotation(f, r).grid.transpose.map( col => col.length - col.dropWhile(_ == 0).length )
+  def getFigureAsColumns(f: Figure, r: Rotation): Figure = {
+    f.copy(grid = rotation(f, r).grid.transpose)
   }
+
+  def getColumnCoords(f: Figure, a: Action): List[Int] = {
+    rotation(f, a.rotation)
+      .grid(0).indices
+      .map(_ + Board.DEFAULT_COLUMN + a.movement.value).toList
+  }
+
+  // TODO: test
+  def computeBelowHeights(f: Figure, r: Rotation, y: Int): List[Int] = {
+    rotation(f, r).grid.transpose.map( col => y + col.length - col.reverse.dropWhile(_ == 0).length ).toList
+  }
+
 }

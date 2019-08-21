@@ -1,5 +1,6 @@
-import com.uhu.cesar.tetris.Board
+import com.uhu.cesar.tetris.{Board, Figure, RawBoard, SimpleBoard}
 import com.uhu.cesar.tetris.Board.BoardParser
+import com.uhu.cesar.tetris.Player.Action
 import org.scalatest.{FlatSpec, Matchers}
 
 class RawBoardSpec extends FlatSpec with Matchers with BoardParser {
@@ -7,18 +8,59 @@ class RawBoardSpec extends FlatSpec with Matchers with BoardParser {
   val emptyboard = "999999999999999999999990000000000000000000000090000000000000000000000090000000000000000000000090000000000000000000000090000000000000000000000090000000000000000000000090000000000000000000000090000000000000000000000090000000000000000000000090000000000000000000000090999999999999999999999990"
   val board1 = "999999999999999999999990000000000000000000000090000000000000000000000090000000000000000000000090000000000000000000000090000000000000000000000090000000000000000000000090000000000000000000000090000000000000000000000090000000000000000000007790000000000000000000007790999999999999999999999990"
   val board2 = "999999999999999999999990000000000000000000000090000000000000000000000090000000000000000000000090000000000000000000000090000000000000000000000090000000000000000000000090000000000000000000000090000000000000000000770090000000000000000000777790000000000000000000007790999999999999999999999990"
+  val boardWithHoles = "999999999999999999999990000000000000000000000090000000000000000000000090000000000000000000000090000000000000000000000090000000000000000000000090000000000000000000000090000000000000000000000090000000000000000000770090000000000000000000777790000000000000000000007790999999999999999999999990"
+  val boardCompletedLine = "999999999999999999999990000000000000000000000790000000000000000000000790000000000000000000000790000000000000000000000790000000000000000000000790000000000000000000000790000000000000000000000790000000000000000000777790000000000000000000777790000000000000000000007790999999999999999999999990"
 
-  "A board" should "have the sum of the absolute value of the difference between the height of adjacent columns" in {
+  "A board" should "have correct height differences" in {
 
-    Board.heightDifferences(parseBoard(emptyboard)) shouldEqual 0
     Board.heightDifferences(parseBoard(board1)) shouldEqual 2
+    Board.heightDifferences(parseBoard(emptyboard)) shouldEqual 0
     Board.heightDifferences(parseBoard(board2)) shouldEqual 6
 
   }
 
-  it should "have the number of holes as all empty spaces below the max heithg of every column" in {
+  it should "compute average height" in {
+    Board.averageHeight(parseBoard(emptyboard)) shouldEqual 0d
+    Board.averageHeight(parseBoard(board1)) shouldEqual 0.4d
+  }
+
+  it should "compute the correct number of holes as all empty spaces below the max height of every column" in {
     Board.numberOfHoles(parseBoard(emptyboard)) shouldEqual 0
     Board.numberOfHoles(parseBoard(board2)) shouldEqual 2
+  }
+
+  it should "be convertible from RawBoard to SimpleBoard" in {
+    Board.simpleProjection(parseBoard(board1)) shouldEqual SimpleBoard(Vector(0,0,0,0,0,0,0,0,2,2))
+    Board.simpleProjection(parseBoard(boardWithHoles)) shouldEqual SimpleBoard(Vector(0,0,0,0,0,0,0,4,4,2))
+  }
+
+  // Extend this test using figures with differences in height and width
+  it should "slice using a figure" in {
+    val figure = Figure.SQUARE
+    val slice = Board.filterBelowColumns(parseBoard(board1), figure, Action(3, 0))
+    slice shouldEqual Vector(
+      Vector(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0),
+      Vector(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,7,7)
+    )
+  }
+
+  it should "compute correct column heights" in {
+    parseBoard(board1).values.map(Board.columnHeight) shouldEqual Vector(0,0,0,0,0,0,0,0,2,2)
+  }
+
+  it should "compute the number of completed rows" in {
+    Board.completedRows(parseBoard(board1)) shouldEqual 0
+    Board.completedRows(parseBoard(boardCompletedLine)) shouldEqual 1
+  }
+
+  it should "compute the next board, given the current board, a figure and an action" in {
+    val figure = Figure.SQUARE
+    val board = parseBoard(board1)
+    val expectedBoard = parseBoard("999999999999999999999990000000000000000000007790000000000000000000007790000000000000000000000090000000000000000000000090000000000000000000000090000000000000000000000090000000000000000000000090000000000000000000000090000000000000000000007790000000000000000000007790999999999999999999999990")
+    val expectedBoard2 = parseBoard("999999999999999999999990000000000000000000000090000000000000000000000090000000000000000000000090000000000000000000000090000000000000000000000090000000000000000000000090000000000000000000000090000000000000000000770090000000000000000000777790000000000000000000007790999999999999999999999990")
+
+    Board.computeNextBoard(board, figure, Action(-4, 0)).values shouldEqual expectedBoard.values
+    Board.computeNextBoard(board, figure, Action(3, 0)).values shouldEqual expectedBoard2.values
   }
 
 }

@@ -74,7 +74,7 @@ object Player {
 
   case class Action(movement: Displacement, rotation: Rotation)
   object Action {
-    def apply(rotation: Int, column: Int): Action = new Action(Displacement(column), Rotation(rotation))
+    def apply(displacement: Int, rotation: Int): Action = new Action(Displacement(displacement), Rotation(rotation))
   }
 
   case class Rotation(value: Int) {
