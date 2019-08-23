@@ -2,8 +2,8 @@ package com.uhu.cesar.tetris
 
 import java.io._
 
-import Player.Action
-import QFunction.{QFunctionKey, QFunctionValue}
+import com.uhu.cesar.tetris.Board.SimpleBoard
+import com.uhu.cesar.tetris.QFunction.{QFunctionKey, QFunctionValue}
 
 import scala.util.Random
 
@@ -18,7 +18,7 @@ case class QFunction(data: Map[QFunctionKey, QFunctionValue]) {
   }
 
   def bestActionValue(board: SimpleBoard): QFunctionValue = {
-    getAll{ case QFunctionKey(b, _, _) => b == board }
+    getAll(_ == board)
       .map(_._2)
       .reduceOption(_ max _)
       .getOrElse(QFunction.DEFAULT_VALUE)
@@ -28,16 +28,16 @@ case class QFunction(data: Map[QFunctionKey, QFunctionValue]) {
 
 object QFunction {
 
-  private val DEFAULT_VALUE = 0f
+  private val DEFAULT_VALUE: QFunctionValue = 0d
 
-  case class QFunctionKey(board: SimpleBoard, figure: Figure, action: Action)
-  type QFunctionValue = Float
+  type QFunctionKey = SimpleBoard
+  type QFunctionValue = Double
 
   // TODO: get this file name from config
   val name = "qfunction"
 
   trait QFunctionSerializer {
-    def write(qf: QFunction): Unit = {
+    def writeQFunction(qf: QFunction): Unit = {
       val out = new ObjectOutputStream(new FileOutputStream(name))
       out.writeObject(qf)
       out.close()
@@ -45,7 +45,7 @@ object QFunction {
   }
 
   trait QFunctionLoader {
-    def load(filename: String): QFunction = {
+    def loadQFunction(filename: String): QFunction = {
 
       def closing[A, B <: Closeable](c: B)(f: B => A): A = try f(c) finally c.close()
 

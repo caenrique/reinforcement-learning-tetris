@@ -1,8 +1,7 @@
 package com.uhu.cesar.tetris
 
-import Board.HeuristicValue
-import Player.Action
-import QFunction.QFunctionValue
+import com.uhu.cesar.tetris.Board.{HeuristicValue, RawBoard}
+import com.uhu.cesar.tetris.QFunction.QFunctionValue
 
 import scala.util.Random
 
@@ -22,7 +21,9 @@ object Policy {
   }
 
   // Sort by Heuristics value and get the first action
-  def heuristicPolicy: Policy = _.maxBy(_._3)._1
+  def heuristicPolicy: Policy = actions => {
+    actions.maxBy(_._3)._1
+  }
 
   def eGreedy: Policy = if (Random.nextFloat() > 0.1) onPolicy else randomPolicy
 

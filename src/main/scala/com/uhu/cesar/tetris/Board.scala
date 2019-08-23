@@ -1,19 +1,22 @@
 package com.uhu.cesar.tetris
 
-import Player.{Action, Rotation}
+import com.uhu.cesar.tetris.Action.Rotation
 
 sealed trait Board extends Product with Serializable
-case class RawBoard(values: Vector[Vector[Int]]) extends Board {
-  override def toString: String = {
-    values.transpose
-      .map(_.map(n => if (n == 0) " " else n.toString).mkString(" ", " ", " "))
-      .mkString("#", "#\n#", "#").concat("\n" + (1 to 12).map(_ => "# ").mkString)
-
-  }
-}
-case class SimpleBoard(values: Vector[Int]) extends Board
 
 object Board {
+
+  case class RawBoard(values: Vector[Vector[Int]]) extends Board {
+
+    override def toString: String = {
+      values.transpose
+        .map(_.map(n => if (n == 0) " " else n.toString).mkString(" ", " ", " "))
+        .mkString("#", "#\n#", "#").concat("\n" + (1 to 12).map(_ => "# ").mkString)
+    }
+
+  }
+
+  case class SimpleBoard(values: Vector[Int]) extends Board
 
   type HeuristicValue = Double
 
@@ -31,7 +34,7 @@ object Board {
     def parseBoard(serializedBoard: String): RawBoard = {
 
       val boardData = serializedBoard.map(_.asDigit) // convert chars to digits
-        .grouped(RAW_HEIGHT).toVector// group by columns
+        .grouped(RAW_HEIGHT).toVector // group by columns
         .drop(1).dropRight(1) // remove first and last column, corresponding with walls
         .map(_.dropRight(2).toVector) // remove the floor, also represented as wall
 
@@ -44,39 +47,45 @@ object Board {
     SimpleBoard(values)
   }
 
+  def illegalMove(b: RawBoard, f: Figure, a: Action): Boolean = {
+    filterBelowColumns(b, f, a).map(columnHeight)
+      .exists(ch => ch + Figure.relativeHeight(f, a.rotation) > Board.HEIGHT)
+  }
+
   def filterBelowColumns(board: RawBoard, figure: Figure, a: Action): Vector[Vector[Int]] = {
     val colCoords = Figure.getColumnCoords(figure, a)
     board.values.slice(colCoords.min, colCoords.max + 1)
   }
 
+  def columnTopCoord: Vector[Int] => Int = _.takeWhile(_ == EMPTY).length
+
   def columnHeight: Vector[Int] => Int = _.dropWhile(_ == EMPTY).length
 
   def heightDifferences: RawBoard => Int = b => {
-    val h @ _ :: rest = b.values.map(columnHeight).toList
+    val h@_ :: rest = b.values.map(columnHeight).toList
     h.zip(rest).map { case (a, b) => Math.abs(a - b) }.sum
   }
 
   def averageHeight: RawBoard => Double = b => b.values.map(columnHeight).sum.toDouble / b.values.length
 
-  def numberOfHoles: RawBoard => Int = _.values.flatMap(_.dropWhile(_ == EMPTY)).count(_ == EMPTY)
+  def numberOfHoles: RawBoard => Int = _.values.map(_.dropWhile(_ == EMPTY).count(_ == EMPTY)).sum
 
   def completedRows: RawBoard => Int = _.values.transpose.count(_.forall(_ != EMPTY))
 
   def computeNextBoard(b: RawBoard, f: Figure, a: Action): RawBoard = {
-    val currentFigure = Figure.rotation(f, a.rotation)
     val x = DEFAULT_COLUMN + a.movement.value
 
-    val heights = b.values.map(columnHeight)
-    val belowColHeights = filterBelowColumns(b, currentFigure, a).map(columnHeight)
+    val heights = b.values.map(columnTopCoord)
 
     def grounded(b: RawBoard, f: Figure, r: Rotation, x: Int, y: Int): Boolean = {
-      val figureHeights = Figure.computeBelowHeights(f, r, y)
-      belowColHeights.zip(figureHeights).exists{case (bh, fh) => bh == fh}
+      f.coordinates(r.value).exists { case (dx, dy) =>
+          if (dy + y == 21) true else b.values(dx + x)(dy + y + 1) != EMPTY
+      }
     }
 
-    var y = heights.max + 1
-    while(!grounded(b, f, a.rotation, x, y) && y > 0) {
-      y = y - 1
+    var y = heights.min - Figure.relativeHeight(f, a.rotation)
+    while (!grounded(b, f, a.rotation, x, y) && y < Board.HEIGHT) {
+      y = y + 1
     }
 
     insertFigure(b, f, a.rotation, x, y)
@@ -90,7 +99,7 @@ object Board {
   // TODO: test
   def setValues(b: RawBoard, fId: Int, coords: List[(Int, Int)]): RawBoard = {
     coords.foldLeft(b) { case (b, (x, y)) =>
-        RawBoard(b.values.updated(x, b.values(x).updated(HEIGHT - 1 - y, fId)))
+      RawBoard(b.values.updated(x, b.values(x).updated(y, if (fId == 0) 7 else fId)))
     }
   }
 

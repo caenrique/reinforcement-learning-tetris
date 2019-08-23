@@ -1,77 +1,89 @@
 package com.uhu.cesar.tetris
 
-import Player.{Action, Rotation}
+import com.uhu.cesar.tetris.Action.Rotation
 
-case class Figure(symbol: Int, width: Int, moves: Array[Int], grid: Array[Array[Int]])
+case class Figure(symbol: Int, coordinates: List[List[(Int, Int)]])
 
 // TODO: Load figures from file
 object Figure {
-  val SQUARE = Figure(
-    symbol = 7,
-    width = 2,
-    moves = (-4 to 4).toArray,//.filter(_ % 2 == 0),
-    grid = Array(
-      Array(7, 7),
-      Array(7, 7),
-    )
-  )
 
-  val EMPTY = Figure(
+  val STICK = Figure(
     symbol = 0,
-    width = 0,
-    moves = Array.empty,
-    grid = Array.ofDim(2)
+    coordinates = List(List((0, 1), (1, 1), (2, 1), (3, 1)), List((1, 0), (1, 1), (1, 2), (1, 3)), List((0, 1), (1, 1), (2, 1), (3, 1)), List((1, 0), (1, 1), (1, 2), (1, 3)))
   )
 
-  def isFigure(symbol: Int): Boolean = symbol == 3
+  val ELE = Figure(
+    symbol = 1,
+    coordinates = List(List((0, 1), (1, 1), (2, 1), (2, 0)), List((1, 0), (1, 1), (1, 2), (2, 2)), List((0, 1), (1, 1), (2, 1), (0, 2)), List((1, 0), (1, 1), (1, 2), (0, 0)))
+  )
 
-  // TODO: test
-  def rotation(f: Figure, r: Rotation): Figure = {
+  val JOTA = Figure(
+    symbol = 2,
+    coordinates = List(List((0, 1), (1, 1), (2, 1), (2, 2)), List((1, 0), (1, 1), (1, 2), (0, 2)), List((0, 1), (1, 1), (2, 1), (0, 0)), List((1, 0), (1, 1), (1, 2), (2, 0)))
+  )
 
-    // Apply n times the function f, which gives an A from another A,
-    // so f function can be applied indefinitely
-    def applyNTimes[A](n: Int)(f: A => A): A => A = (obj: A) => (1 to n).foldLeft(obj)( (dObj, _) => f(dObj) )
+  val SQUARE = Figure(
+    symbol = 3,
+    coordinates = List(List((0, 0), (0, 1), (1, 0), (1, 1)), List((0, 0), (0, 1), (1, 0), (1, 1)), List((0, 0), (0, 1), (1, 0), (1, 1)), List((0, 0), (0, 1), (1, 0), (1, 1)))
+  )
 
-    // Rotate 90º clockwise by applying two symmetries.
-    // 1º main diagonal symmetry ( transpose ). 2º vertical symmetry ( map(_.reverse) )
-    val rotate90: Figure => Figure = (obj: Figure) => obj.copy(grid = obj.grid.transpose.map(_.reverse))
+  val ESE = Figure(
+    symbol = 4,
+    coordinates = List(List((1, 0), (2, 0), (0, 1), (1, 1)), List((0, 0), (0, 1), (1, 1), (1, 2)), List((1, 0), (2, 0), (0, 1), (1, 1)), List((0, 0), (0, 1), (1, 1), (1, 2)))
+  )
 
-    // Apply that N times
-    val rotate: Figure => Figure = applyNTimes(r.value)(rotate90)
+  val PIRAMID = Figure(
+    symbol = 5,
+    coordinates = List(List((1, 0), (0, 1), (1, 1), (2, 1)), List((1, 0), (0, 1), (1, 1), (1, 2)), List((0, 1), (1, 1), (2, 1), (1, 2)), List((1, 0), (1, 1), (2, 1), (1, 2)))
+  )
 
+  val ZETA = Figure(
+    symbol = 6,
+    coordinates = List(List((0, 0), (1, 0), (1, 1), (2, 1)), List((1, 0), (0, 1), (1, 1), (0, 2)), List((0, 0), (1, 0), (1, 1), (2, 1)), List((1, 0), (0, 1), (1, 1), (0, 2)))
+  )
 
-    rotate(f)
-  }
-
+  def isFigure(symbol: Int): Boolean = (0 to 6).contains(symbol)
 
   def apply(symbol: Int): Figure = symbol match {
+    case STICK.symbol => STICK
+    case JOTA.symbol => JOTA
+    case ELE.symbol => ELE
     case SQUARE.symbol => SQUARE
+    case ESE.symbol => ESE
+    case PIRAMID.symbol => PIRAMID
+    case ZETA.symbol => ZETA
+    case _ => Figure(-1, List.empty)
+  }
+
+  def relativeHeight(f: Figure, r: Rotation): Int = f.coordinates(r.value).maxBy(_._2)._2 + 1
+
+  def moves(f: Figure, r: Rotation): List[Int] = {
+    val coords = f.coordinates(r.value)
+    val xmin = coords.map(_._1).min
+    val xmax = coords.map(_._1).max
+
+    val start = -(Board.DEFAULT_COLUMN + xmin)
+    val end = Board.WIDTH - Board.DEFAULT_COLUMN - xmax - 1
+
+    (start to end).toList
   }
 
   // TODO: test
   def getCoordinates(f: Figure, r: Rotation, x: Int, y: Int): List[(Int, Int)] = {
-
-    val columns = getFigureAsColumns(f, r).grid
-    val columnCoords = columns.indices.map{ dx => (x + dx, y) }.toList
-
-    columns.zip(columnCoords).flatMap { case (col, (x, y)) =>
-        col.zipWithIndex.filter(_._1 != 0).map { case (_, dy) => (x, y + dy) }
-    }.toList
-  }
-
-  def getFigureAsColumns(f: Figure, r: Rotation): Figure = {
-    f.copy(grid = rotation(f, r).grid.transpose)
+    f.coordinates(r.value).map{ case (dx, dy) => (x + dx, y + dy) }
   }
 
   def getColumnCoords(f: Figure, a: Action): List[Int] = {
-    rotation(f, a.rotation)
-      .grid(0).indices
-      .map(_ + Board.DEFAULT_COLUMN + a.movement.value).toList
+    f.coordinates(a.rotation.value).map(_._1 + a.movement.value + Board.DEFAULT_COLUMN).distinct
   }
 
   // TODO: test
   def computeBelowHeights(f: Figure, r: Rotation, y: Int): List[Int] = {
-    rotation(f, r).grid.transpose.map( col => y + col.length - col.reverse.dropWhile(_ == 0).length ).toList
+    f.coordinates(r.value)
+      .groupBy(_._1).toList
+      .sortBy(_._1)
+      .map { case (_, coords) => coords.map(_._2).max }
+      .map(_ + y)
   }
 
 }

@@ -1,15 +1,16 @@
 package com.uhu.cesar.tetris
 
-import com.uhu.cesar.tetris.Board.BoardParser
+import com.uhu.cesar.tetris.Board.{BoardParser, RawBoard}
 
 import scala.util.matching.Regex
 
 sealed trait Message
-case class MovMessage(current: Figure, next: Figure, score: Int, clearedRows: Int, board: RawBoard) extends Message
-case class EndMessage(finalScore: Int) extends Message
-case class BadMessage(msg: String) extends Message
 
 object Message {
+
+  case class MovMessage(current: Figure, next: Figure, score: Int, clearedRows: Int, board: RawBoard) extends Message
+  case class EndMessage(finalScore: Int) extends Message
+  case class BadMessage(msg: String) extends Message
 
   trait MessageParser extends BoardParser {
 
@@ -19,7 +20,7 @@ object Message {
 
       message match {
         case movPattern(current, next, board, score, clearedRows) =>
-          MovMessage(Figure.SQUARE, Figure.SQUARE, score.toInt, clearedRows.toInt, parseBoard(board))
+          MovMessage(Figure(current.toInt), Figure(next.toInt), score.toInt, clearedRows.toInt, parseBoard(board))
         case endPattern(score) => EndMessage(score.toInt)
         case _ => BadMessage(message)
       }

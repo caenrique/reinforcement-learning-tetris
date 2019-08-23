@@ -3,13 +3,13 @@ package com.uhu.cesar.tetris
 import java.io.{Closeable, IOException}
 import java.net.{DatagramPacket, DatagramSocket, InetAddress, SocketException}
 
-import com.uhu.cesar.tetris.Message.MessageParser
-import com.uhu.cesar.tetris.app.Respuesta
+import com.uhu.cesar.tetris.Message.{BadMessage, EndMessage, MessageParser, MovMessage}
 
 
-trait Player { mp: MessageParser =>
+trait Player {
+  mp: MessageParser =>
 
-  var  numberOfGames = 0
+  var numberOfGames = 0
 
   val LOGIN: String
   val NAME: String
@@ -66,23 +66,6 @@ trait Player { mp: MessageParser =>
       case e: SocketException => println("Socket: " + e.getMessage);
       case e: IOException => println("IO: " + e.getMessage);
     }
-  }
-
-}
-
-object Player {
-
-  case class Action(movement: Displacement, rotation: Rotation)
-  object Action {
-    def apply(displacement: Int, rotation: Int): Action = new Action(Displacement(displacement), Rotation(rotation))
-  }
-
-  case class Rotation(value: Int) {
-    assert(value >= 0 && value <= 3)
-  }
-
-  case class Displacement(value: Int) {
-    assert(value >= -6 && value <= 6)
   }
 
 }

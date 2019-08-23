@@ -1,38 +1,40 @@
 package com.uhu.cesar.tetris
 
-import com.uhu.cesar.tetris.Player.Action
-import com.uhu.cesar.tetris.QFunction.QFunctionKey
+import com.uhu.cesar.tetris.Board.{HeuristicValue, RawBoard}
+import com.uhu.cesar.tetris.Policy.Policy
+import com.uhu.cesar.tetris.QFunction.{QFunctionKey, QFunctionValue}
 
 case class Trainer(alpha: Float,
                    gamma: Float,
                    var qf: QFunction = QFunction.empty,
                    var lastMove: Option[QFunctionKey] = None)
-                  (play: (QFunction, Figure, RawBoard) => Action) {
+                  (policy: Policy) {
 
   def training(rawBoard: RawBoard, figure: Figure, clearedRows: Int): Action = {
 
-    val board = Board.simpleProjection(rawBoard)
-
-    val nextQFunction = mapLastMove(lastMove, computeNewQValue(reward(clearedRows), qf.bestActionValue(board), _))
-    val nextMove = play(nextQFunction, figure, rawBoard)
+    val theMoves = QPlayer.getMoves(rawBoard, figure)
+    val bestMoveValue = theMoves.map{ case (_, b) => qf.get(Board.simpleProjection(b)) }.max
+    val nextQFunction = mapLastMove(lastMove, computeNewQValue(reward(clearedRows), bestMoveValue, _))
+    val nextMove = QPlayer.play(policy)(nextQFunction, theMoves)
 
     // UPDATING VARIABLES //
-    lastMove = Some(QFunctionKey(board, figure, nextMove))
+    lastMove = Some(Board.simpleProjection(theMoves.filter{ case (action, _) => action == nextMove }.head._2))
     qf = nextQFunction
     ////////////////////////
 
     nextMove
   }
 
-  def computeNewQValue(reward: Int, potential: Float, lastMove: QFunctionKey): Float = {
-    def difference(reward: Int, potential: Float, lastValue: Float): Float = {
+  def computeNewQValue(reward: Int, potential: QFunctionValue, lastMove: QFunctionKey): QFunctionValue = {
+    def difference(reward: Int, potential: QFunctionValue, lastValue: QFunctionValue): QFunctionValue = {
       alpha * (reward + (gamma * potential) - lastValue)
     }
+
     val lastMoveValue = qf.get(lastMove)
     lastMoveValue + difference(reward, potential, lastMoveValue)
   }
 
-  def mapLastMove(lmo: Option[QFunctionKey], newValueF: QFunctionKey => Float): QFunction = {
+  def mapLastMove(lmo: Option[QFunctionKey], newValueF: QFunctionKey => QFunctionValue): QFunction = {
     lmo.map(lm => qf.update(lm, newValueF(lm))).getOrElse(qf)
   }
 
