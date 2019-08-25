@@ -1,11 +1,52 @@
 package com.uhu.cesar.tetris
 
 import com.uhu.cesar.tetris.Action.Rotation
+import com.uhu.cesar.tetris.Figure.FigureSymbol
 
-case class Figure(symbol: Int, coordinates: List[List[(Int, Int)]])
+case class Figure(symbol: FigureSymbol, coordinates: List[List[(Int, Int)]]) {
+
+  def relativeHeight(r: Rotation): Int = coordinates(r.value).maxBy(_._2)._2 + 1
+
+  def width(r: Rotation): Int = {
+    val xCoords = coordinates(r.value).map(_._1)
+    xCoords.max - xCoords.min
+  }
+
+  def moves(r: Rotation): List[Int] = {
+    val coords = coordinates(r.value)
+    val xmin = coords.map(_._1).min
+    val xmax = coords.map(_._1).max
+
+    val start = -(Board.DEFAULT_COLUMN + xmin)
+    val end = Board.WIDTH - Board.DEFAULT_COLUMN - xmax - 1
+
+    (start to end).toList
+  }
+
+  // TODO: test
+  def getCoordinates(r: Rotation, x: Int, y: Int): List[(Int, Int)] = {
+    coordinates(r.value).map{ case (dx, dy) => (x + dx, y + dy) }
+  }
+
+  def getColumnCoords(a: Action): List[Int] = {
+    coordinates(a.rotation.value).map(_._1 + a.movement.value + Board.DEFAULT_COLUMN).distinct
+  }
+
+  // TODO: test
+  def computeBelowHeights(r: Rotation, y: Int): List[Int] = {
+    coordinates(r.value)
+      .groupBy(_._1).toList
+      .sortBy(_._1)
+      .map { case (_, coords) => coords.map(_._2).max }
+      .map(_ + y)
+  }
+
+}
 
 // TODO: Load figures from file
 object Figure {
+
+  type FigureSymbol = Int
 
   val STICK = Figure(
     symbol = 0,
@@ -44,7 +85,7 @@ object Figure {
 
   def isFigure(symbol: Int): Boolean = (0 to 6).contains(symbol)
 
-  def apply(symbol: Int): Figure = symbol match {
+  def apply(symbol: FigureSymbol): Figure = symbol match {
     case STICK.symbol => STICK
     case JOTA.symbol => JOTA
     case ELE.symbol => ELE
@@ -53,37 +94,6 @@ object Figure {
     case PIRAMID.symbol => PIRAMID
     case ZETA.symbol => ZETA
     case _ => Figure(-1, List.empty)
-  }
-
-  def relativeHeight(f: Figure, r: Rotation): Int = f.coordinates(r.value).maxBy(_._2)._2 + 1
-
-  def moves(f: Figure, r: Rotation): List[Int] = {
-    val coords = f.coordinates(r.value)
-    val xmin = coords.map(_._1).min
-    val xmax = coords.map(_._1).max
-
-    val start = -(Board.DEFAULT_COLUMN + xmin)
-    val end = Board.WIDTH - Board.DEFAULT_COLUMN - xmax - 1
-
-    (start to end).toList
-  }
-
-  // TODO: test
-  def getCoordinates(f: Figure, r: Rotation, x: Int, y: Int): List[(Int, Int)] = {
-    f.coordinates(r.value).map{ case (dx, dy) => (x + dx, y + dy) }
-  }
-
-  def getColumnCoords(f: Figure, a: Action): List[Int] = {
-    f.coordinates(a.rotation.value).map(_._1 + a.movement.value + Board.DEFAULT_COLUMN).distinct
-  }
-
-  // TODO: test
-  def computeBelowHeights(f: Figure, r: Rotation, y: Int): List[Int] = {
-    f.coordinates(r.value)
-      .groupBy(_._1).toList
-      .sortBy(_._1)
-      .map { case (_, coords) => coords.map(_._2).max }
-      .map(_ + y)
   }
 
 }

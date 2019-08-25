@@ -1,18 +1,17 @@
 package com.uhu.cesar.tetris
 
-import com.uhu.cesar.tetris.Action.{Displacement, Rotation}
-import com.uhu.cesar.tetris.Board.{HeuristicValue, RawBoard}
+import com.uhu.cesar.tetris.Action.{Movement, Rotation}
+import com.uhu.cesar.tetris.Board.HeuristicValue
 import com.uhu.cesar.tetris.Message.{MessageParser, MovMessage}
 import com.uhu.cesar.tetris.Policy.Policy
-import com.uhu.cesar.tetris.QFunction.{QFunctionLoader, QFunctionSerializer, QFunctionValue}
+import com.uhu.cesar.tetris.QFunction.{QFunctionSerializer, QFunctionValue}
 
 case class QPlayer(training: Boolean, qf: Option[QFunction] = None) extends Player
   with MessageParser
-  with QFunctionSerializer
-  with QFunctionLoader {
+  with QFunctionSerializer {
 
   private val trainer = Trainer(
-    0.2f, 0.2f, qf.getOrElse(QFunction.empty)
+    0.2f, 0.4f, qf.getOrElse(QFunction.empty)
   )(Policy.heuristicEGreedy)
 
   override val NAME = "Cesar"
@@ -22,7 +21,8 @@ case class QPlayer(training: Boolean, qf: Option[QFunction] = None) extends Play
 
   override def restart(): Boolean = {
     trainer.endOfEpisode()
-    writeQFunction(trainer.qf)
+    episode = episode + 1
+    if (episode % 20 == 0) writeQFunction(trainer.qf)
     true
   }
 
@@ -30,9 +30,9 @@ case class QPlayer(training: Boolean, qf: Option[QFunction] = None) extends Play
 
     val action = percepcion match {
       case MovMessage(figure, _, _, clearedRows, board) =>
-        if (training) trainer.training(board, figure, clearedRows)
-        else QPlayer.play(Policy.eGreedy)(qf.getOrElse(QFunction.empty), QPlayer.getMoves(board, figure))
-      case _ => Action(Displacement(0), Rotation(0))
+        if (training) trainer.training(episode, board, figure, clearedRows)
+        else QPlayer.play(Policy.eGreedy)(qf.getOrElse(QFunction.empty), board, figure)
+      case _ => Action(Movement(0), Rotation(0))
     }
 
     Respuesta(action.movement, action.rotation)
@@ -42,22 +42,26 @@ case class QPlayer(training: Boolean, qf: Option[QFunction] = None) extends Play
 
 object QPlayer {
 
-  def getMoves(board: RawBoard, figure: Figure): List[(Action, RawBoard)] = {
+  def getMoves(board: Board, figure: Figure): List[Action] = {
 
     (0 to 3).flatMap(r =>
-      Figure.moves(figure, Rotation(r))
+      figure.moves(Rotation(r))
         .map(Action(_, r))
-        .filterNot(Board.illegalMove(board, figure, _))
-        .map { a => (a, Board.computeNextBoard(board, figure, a)) }
+        .filterNot(board.illegalMove(figure, _))
     ).toList
   }
 
-  def play(policy: Policy)(qFunction: QFunction, moves: List[(Action, RawBoard)]): Action = {
+  def play(policy: Policy)(qFunction: QFunction, board: Board, figure: Figure): Action = {
 
-    def qvalue(b: RawBoard): QFunctionValue = qFunction.get(Board.simpleProjection(b))
-    def hvalue(b: RawBoard): HeuristicValue = Board.heuristicEval(b)
+    def qvalue(action: Action): QFunctionValue = action match {
+      case Action(movement, rotation) =>
+        val key = (board.simpleProjection, figure.symbol, movement, rotation)
+        qFunction.get(key)
+    }
 
-    policy(moves.map { case (a, b) => (a, qvalue(b), hvalue(b)) })
+    def hvalue(action: Action): HeuristicValue = board.computeNextBoard(figure, action).heuristicEval
+
+    policy(getMoves(board, figure).map { a => (a, qvalue(a), hvalue(a)) })
   }
 
 }

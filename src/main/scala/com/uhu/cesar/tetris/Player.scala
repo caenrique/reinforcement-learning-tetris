@@ -9,7 +9,7 @@ import com.uhu.cesar.tetris.Message.{BadMessage, EndMessage, MessageParser, MovM
 trait Player {
   mp: MessageParser =>
 
-  var numberOfGames = 0
+  var episode = 0
 
   val LOGIN: String
   val NAME: String
@@ -51,7 +51,6 @@ trait Player {
   }
 
   def start(): Unit = {
-    numberOfGames = numberOfGames + 1
     val startMessage = s"start;$LOGIN;$NAME;"
     send(startMessage)
   }
