@@ -6,37 +6,41 @@ import com.uhu.cesar.tetris.Message.{MessageParser, MovMessage}
 import com.uhu.cesar.tetris.Policy.Policy
 import com.uhu.cesar.tetris.QFunction.{QFunctionSerializer, QFunctionValue}
 
-case class QPlayer(training: Boolean, qf: Option[QFunction] = None) extends Player
+case class QPlayer(training: Boolean, qf: Option[QFunction]) extends Player
   with MessageParser
   with QFunctionSerializer {
 
   private val trainer = Trainer(
-    0.2f, 0.4f, qf.getOrElse(QFunction.empty)
-  )(Policy.heuristicEGreedy)
+    0.2f, 0.8f, qf.getOrElse(QFunction.empty)
+  )(Policy.heuristicEGreedy(0.1d))
 
   override val NAME = "Cesar"
   override val LOGIN = "cesarantonio.enrique"
 
   override def init(): Unit = {}
 
-  override def restart(): Boolean = {
+  //override def training() = this.training
+
+  override def restart(): Unit = {
     trainer.endOfEpisode()
-    episode = episode + 1
-    if (episode % 20 == 0) writeQFunction(trainer.qf)
-    true
+
+    println(trainer.statistics)
+    start()
   }
 
   override def think(percepcion: Message): Respuesta = {
 
     val action = percepcion match {
       case MovMessage(figure, _, _, clearedRows, board) =>
-        if (training) trainer.training(episode, board, figure, clearedRows)
-        else QPlayer.play(Policy.eGreedy)(qf.getOrElse(QFunction.empty), board, figure)
+        if (training) trainer.training(board, figure, clearedRows)
+        else QPlayer.play(Policy.onPolicy)(qf.getOrElse(QFunction.empty), board, figure)
       case _ => Action(Movement(0), Rotation(0))
     }
 
     Respuesta(action.movement, action.rotation)
   }
+
+  def writeQFunction: Unit = super.writeQFunction(trainer.qf)
 
 }
 

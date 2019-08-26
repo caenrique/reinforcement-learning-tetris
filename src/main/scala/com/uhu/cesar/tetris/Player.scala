@@ -4,33 +4,36 @@ import java.io.{Closeable, IOException}
 import java.net.{DatagramPacket, DatagramSocket, InetAddress, SocketException}
 
 import com.uhu.cesar.tetris.Message.{BadMessage, EndMessage, MessageParser, MovMessage}
+import sun.misc.Signal
 
 
 trait Player {
   mp: MessageParser =>
 
-  var episode = 0
-
   val LOGIN: String
   val NAME: String
 
   def init(): Unit
+  val training: Boolean
 
   def think(perception: Message): Respuesta
 
-  def restart(): Boolean
+  def restart(): Unit
 
   val SEND_PORT = 4567
   val RECEIVE_PORT = 5678
 
   def gameLoop(): Unit = {
 
-    def closing[A, B <: Closeable](c: B)(f: B => A): A = try f(c) finally c.close()
+    def closing[A, B <: Closeable](c: B)(f: B => A): A = try f(c) finally {
+      c.close()
+    }
 
     closing(new DatagramSocket(RECEIVE_PORT)) { socket =>
       val bufer = Array.ofDim[Byte](1000)
 
       while (true) {
+
         // PERCIBIR
         val peticion = new DatagramPacket(bufer, bufer.length)
         socket.receive(peticion)
@@ -42,8 +45,8 @@ trait Player {
         message match {
           case m: MovMessage =>
             send(think(m).toString)
-            send("CAER")
-          case m: EndMessage => if (restart()) start() else println("End of the Game")
+            if (training) send("CAER")
+          case m: EndMessage => restart()
           case m: BadMessage => throw new Exception(s"Bad Message: ${m.msg}")
         }
       }

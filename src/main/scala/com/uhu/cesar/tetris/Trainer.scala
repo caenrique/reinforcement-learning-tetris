@@ -3,36 +3,43 @@ package com.uhu.cesar.tetris
 import com.uhu.cesar.tetris.Policy.Policy
 import com.uhu.cesar.tetris.QFunction.{QFunctionKey, QFunctionValue}
 
-case class Trainer(alpha: Float,
-                   gamma: Float,
-                   var qf: QFunction = QFunction.empty,
-                   var lastMove: Option[QFunctionKey] = None)
+case class Trainer(alpha2: Double,
+                   gamma: Double,
+                   var qf: QFunction,
+                   var lastMove: Option[QFunctionKey] = None,
+                   var episode: Int = 1)
                   (policy: Int => Policy) {
 
-  def variableAlpha(episode: Int): Float = 1 / (episode + 1)
+  var clearedRows = 0
 
-  def training(episode: Int, board: Board, figure: Figure, clearedRows: Int): Action = {
+  def training(board: Board, figure: Figure, rows: Int): Action = {
 
     val simpleBoard = board.simpleProjection
-    val bestValue = qf.bestActionValue(simpleBoard, figure)
+    val bestValue = qf.bestActionValue(board, figure)
     val nextQFunction = mapLastMove(lastMove, computeNewQValue(reward(clearedRows), bestValue, _))
     val nextMove = QPlayer.play(policy(episode))(nextQFunction, board, figure)
 
     // UPDATING VARIABLES //
     lastMove = Some((simpleBoard, figure.symbol, nextMove.movement, nextMove.rotation))
     qf = nextQFunction
+    clearedRows = clearedRows + rows
+
     ////////////////////////
 
     nextMove
   }
 
-  def computeNewQValue(reward: Int, potential: QFunctionValue, lastMove: QFunctionKey): QFunctionValue = {
-    def difference(reward: Int, potential: QFunctionValue, lastValue: QFunctionValue): QFunctionValue = {
-      alpha * (reward + (gamma * potential) - lastValue)
-    }
+  def statistics: String = {
+    val statString = s"episode: $episode, states: ${qf.data.size}, alpha: $alpha, cleared rows: $clearedRows"
+    clearedRows = 0
+    statString
+  }
 
+  def alpha = 1 / (1 + Math.sqrt(episode) / 10)
+
+  def computeNewQValue(reward: Int, potential: QFunctionValue, lastMove: QFunctionKey): QFunctionValue = {
     val lastMoveValue = qf.get(lastMove)
-    lastMoveValue + difference(reward, potential, lastMoveValue)
+    (1 - alpha) * lastMoveValue + alpha * (reward + gamma * potential)
   }
 
   def mapLastMove(lmo: Option[QFunctionKey], newValueF: QFunctionKey => QFunctionValue): QFunction = {
@@ -40,9 +47,10 @@ case class Trainer(alpha: Float,
   }
 
   def endOfEpisode(): Unit = {
-    qf = mapLastMove(lastMove, computeNewQValue(-1000, 0, _))
+    qf = mapLastMove(lastMove, _ => 0)
+    episode = episode + 1
   }
 
-  private def reward(rows: Int): Int = if (rows == 0) 0 else if (rows == 1) 100 else if (rows == 2) 300 else if (rows == 3) 500 else 800
+  private def reward(rows: Int): Int = if (rows == 0) 0 else if (rows == 1) 1 else if (rows == 2) 3 else if (rows == 3) 5 else 8
 }
 
