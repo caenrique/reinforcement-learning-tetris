@@ -31,41 +31,43 @@ case class QPlayer(training: Boolean, qf: Option[QFunction]) extends Player
   override def think(percepcion: Message): Respuesta = {
 
     val action = percepcion match {
-      case MovMessage(figure, _, _, clearedRows, board) =>
-        if (training) trainer.training(board, figure, clearedRows)
-        else QPlayer.play(Policy.onPolicy)(qf.getOrElse(QFunction.empty), board, figure)
+      case MovMessage(figure, nextFigure, _, clearedRows, board) =>
+        if (training) trainer.training(board, figure, nextFigure, clearedRows)
+        else QPlayer.play(Policy.onPolicy)(qf.getOrElse(QFunction.empty), board, figure, nextFigure)
       case _ => Action(Movement(0), Rotation(0))
     }
 
     Respuesta(action.movement, action.rotation)
   }
 
-  def writeQFunction: Unit = super.writeQFunction(trainer.qf)
+  def writeQFunction(): Unit = super.writeQFunction(trainer.qf)
 
 }
 
 object QPlayer {
 
-  def getMoves(board: Board, figure: Figure): List[Action] = {
+  def play(policy: Policy)(qFunction: QFunction, board: Board, figure: Figure, nextFigure: Figure): Action = {
 
-    (0 to 3).flatMap(r =>
-      figure.moves(Rotation(r))
-        .map(Action(_, r))
-        .filterNot(board.illegalMove(figure, _))
-    ).toList
-  }
+    def getMoves(board: Board, figure: Figure, nextFigure: Figure): List[(Action, QFunctionValue, HeuristicValue)] = {
+      board.computeNextBoardWActions(figure).map{ case (action, nextBoard) =>
+        val qandh = (0 to 3).flatMap(r => nextFigure.moves(Rotation(r)).map(Action(_, r)))
+          .map(a => (qvalue(nextBoard, nextFigure, a), hvalue(nextBoard, nextFigure, a))).toList
 
-  def play(policy: Policy)(qFunction: QFunction, board: Board, figure: Figure): Action = {
+        val (qvalues, hvalues) = qandh.unzip
 
-    def qvalue(action: Action): QFunctionValue = action match {
+        (action, qvalues.max, hvalues.max)
+      }
+    }
+
+    def qvalue(b: Board, f: Figure, a: Action): QFunctionValue = a match {
       case Action(movement, rotation) =>
-        val key = (board.simpleProjection, figure.symbol, movement, rotation)
+        val key = (b.simpleProjection(f, rotation), movement)
         qFunction.get(key)
     }
 
-    def hvalue(action: Action): HeuristicValue = board.computeNextBoard(figure, action).heuristicEval
+    def hvalue(b: Board, f: Figure, a: Action): HeuristicValue = b.computeNextBoard(f, a).heuristicEval
 
-    policy(getMoves(board, figure).map { a => (a, qvalue(a), hvalue(a)) })
+    policy(getMoves(board, figure, nextFigure))
   }
 
 }

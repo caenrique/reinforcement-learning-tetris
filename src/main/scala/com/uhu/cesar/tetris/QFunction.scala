@@ -19,7 +19,7 @@ case class QFunction(data: HashMap[QFunctionKey, QFunctionValue]) {
   def bestActionValue(board: Board, figure: Figure): QFunctionValue = {
     val searchItems = (0 to 3).flatMap(r => figure.moves(Rotation(r)).map { m => (r, m) })
     searchItems.map { case (r, m) =>
-      get((board.simpleProjection, figure.symbol, Movement(m), Rotation(r)))
+      get((board.simpleProjection(figure, Rotation(r)), Movement(m)))
     }.max
   }
 
@@ -29,7 +29,7 @@ object QFunction {
 
   private val DEFAULT_VALUE: QFunctionValue = 0d
 
-  type QFunctionKey = (SimpleBoard, FigureSymbol, Movement, Rotation)
+  type QFunctionKey = (SimpleBoard, Movement)
   type QFunctionValue = Double
 
   // TODO: get this file name from config

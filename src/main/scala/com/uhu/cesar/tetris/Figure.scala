@@ -1,6 +1,6 @@
 package com.uhu.cesar.tetris
 
-import com.uhu.cesar.tetris.Action.Rotation
+import com.uhu.cesar.tetris.Action.{Movement, Rotation}
 import com.uhu.cesar.tetris.Figure.FigureSymbol
 
 case class Figure(symbol: FigureSymbol, coordinates: List[List[(Int, Int)]]) {
@@ -21,6 +21,10 @@ case class Figure(symbol: FigureSymbol, coordinates: List[List[(Int, Int)]]) {
     val end = Board.WIDTH - Board.DEFAULT_COLUMN - xmax - 1
 
     (start to end).toList
+  }
+
+  def allMoves: List[(Movement, Rotation)] = {
+    (0 to 3).flatMap{ r => moves(Rotation(r)).map( m => (Movement(m), Rotation(r)) ) }.toList
   }
 
   // TODO: test
@@ -86,6 +90,7 @@ object Figure {
   def isFigure(symbol: Int): Boolean = (0 to 6).contains(symbol)
 
   def apply(symbol: FigureSymbol): Figure = symbol match {
+      /*
     case STICK.symbol => STICK
     case JOTA.symbol => JOTA
     case ELE.symbol => ELE
@@ -94,6 +99,8 @@ object Figure {
     case PIRAMID.symbol => PIRAMID
     case ZETA.symbol => ZETA
     case _ => Figure(-1, List.empty)
+       */
+    case _ => Figure.ELE
   }
 
 }

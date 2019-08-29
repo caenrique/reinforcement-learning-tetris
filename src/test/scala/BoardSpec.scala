@@ -28,11 +28,6 @@ class BoardSpec extends FlatSpec with Matchers with BoardParser {
     board2.numberOfHoles shouldEqual 2
   }
 
-  it should "be convertible from Board to SimpleBoard" in {
-    board1.simpleProjection shouldEqual SimpleBoard(Vector(0, 0, 0, 0, 0, 0, 0, 0, 2, 2))
-    board2.simpleProjection shouldEqual SimpleBoard(Vector(0, 0, 0, 0, 0, 0, 0, 4, 4, 2))
-  }
-
   // Extend this test using figures with differences in height and width
   it should "slice using a figure" in {
     val figure = Figure.SQUARE
