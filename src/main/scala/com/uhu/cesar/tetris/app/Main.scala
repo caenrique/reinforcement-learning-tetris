@@ -22,6 +22,8 @@ object Main extends App with QFunctionLoader with QFunctionSerializer {
 
   player.start()
   player.gameLoop(options.episodes)
+  println(options.qfunction)
+  player.writeQFunction(options.qfunction)
   player.printStats()
 
 }

@@ -23,19 +23,18 @@ object CLIParser {
 
     @scala.annotation.tailrec
     def nextOption(options: TetrisOptions, list: List[String]): TetrisOptions = {
+      def isParameter(par: String): Boolean = par(0) != '-'
+
       list match {
-        case Nil => options
-        case "--training" :: alpha :: gamma :: tail =>
-          if (alpha(0) != '-' && gamma(0) != '-') {
-            nextOption(options.copy(
-              training = true,
-              trainingOptions = Some(TrainingOptions(alpha.toDouble, gamma.toDouble))
-            ), tail)
-          } else {
-            nextOption(options.copy(training = true), tail)
-          }
+        case "--training" :: tail =>
+          nextOption(options.copy(training = true), tail)
         case "--stats" :: tail =>
           nextOption(options.copy(stats = true), tail)
+        case "--training" :: alpha :: gamma :: tail if isParameter(alpha) && isParameter(gamma) =>
+          nextOption(options.copy(
+            training = true,
+            trainingOptions = Some(TrainingOptions(alpha.toDouble, gamma.toDouble))
+          ), tail)
         case "--qfunction" :: value :: tail =>
           nextOption(options.copy(qfunction = Some(value)), tail)
         case "--episodes" :: value :: tail =>
@@ -44,6 +43,7 @@ object CLIParser {
           println("Unknown option " + option)
           println(usage)
           sys.exit(1)
+        case Nil => options
       }
     }
 
