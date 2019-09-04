@@ -6,7 +6,7 @@ lazy val root = (project in file(".")).settings(
   scalaVersion := scala_version,
   mainClass in Compile := Some("com.uhu.cesar.tetris.app.Main"),
   mainClass in assembly := Some("com.uhu.cesar.tetris.app.Main"),
-  assemblyOutputPath in assembly := new File("jars/rl-tetris.jar")
+  assemblyOutputPath in assembly := new File("jars/rl-tetris-features-board.jar")
 )
 
 libraryDependencies ++= Seq(
