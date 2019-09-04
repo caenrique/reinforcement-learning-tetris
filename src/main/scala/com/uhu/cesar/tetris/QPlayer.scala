@@ -42,7 +42,10 @@ case class QPlayer(training: Boolean, qf: Option[QFunction]) extends Player
     Respuesta(action.movement, action.rotation)
   }
 
-  def writeQFunction(): Unit = super.writeQFunction(trainer.qf)
+  def writeQFunction(filename: Option[String]): Unit = {
+    if (filename.isDefined) super.writeQFunction(trainer.qf, filename.get)
+    else super.writeQFunction(trainer.qf)
+  }
 
   def printStats(): Unit = {
     println(s"average moves: ${get_averageMovesPerGame()}, average lines: ${get_averageLinesPerGame()}")

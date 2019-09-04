@@ -35,9 +35,9 @@ object QFunction {
   val name = "default-qfunction"
 
   trait QFunctionSerializer {
-    def writeQFunction(qf: QFunction): Unit = {
+    def writeQFunction(qf: QFunction, filename: String = name): Unit = {
       println(s"size of qfunction: ${qf.data.size}")
-      val out = new ObjectOutputStream(new FileOutputStream(name))
+      val out = new ObjectOutputStream(new FileOutputStream(filename))
       out.writeObject(qf)
       out.close()
       println(s"Saved QFunction as $name")

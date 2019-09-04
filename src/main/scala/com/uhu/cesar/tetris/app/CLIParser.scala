@@ -5,9 +5,12 @@ object CLIParser {
   case class TetrisOptions(
                           training: Boolean,
                           stats: Boolean,
+                          trainingOptions: Option[TrainingOptions],
                           qfunction: Option[String],
                           episodes: Option[Int]
                           )
+
+  case class TrainingOptions(alpha: Double, gamma: Double)
 
   val usage =
     """
@@ -18,11 +21,19 @@ object CLIParser {
 
     val arglist = args.toList
 
+    @scala.annotation.tailrec
     def nextOption(options: TetrisOptions, list: List[String]): TetrisOptions = {
       list match {
         case Nil => options
-        case "--training" :: tail =>
-          nextOption(options.copy(training = true), tail)
+        case "--training" :: alpha :: gamma :: tail =>
+          if (alpha(0) != '-' && gamma(0) != '-') {
+            nextOption(options.copy(
+              training = true,
+              trainingOptions = Some(TrainingOptions(alpha.toDouble, gamma.toDouble))
+            ), tail)
+          } else {
+            nextOption(options.copy(training = true), tail)
+          }
         case "--stats" :: tail =>
           nextOption(options.copy(stats = true), tail)
         case "--qfunction" :: value :: tail =>
@@ -36,6 +47,6 @@ object CLIParser {
       }
     }
 
-    nextOption(TetrisOptions(training = false, stats = false, None, None), arglist)
+    nextOption(TetrisOptions(training = false, stats = false, None, None, None), arglist)
   }
 }

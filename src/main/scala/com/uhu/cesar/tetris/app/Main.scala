@@ -13,7 +13,7 @@ object Main extends App with QFunctionLoader with QFunctionSerializer {
   val player: QPlayer = QPlayer(training = options.training, qfunctionOption)
 
   Signal.handle(new Signal("INT"), _ => {
-    player.writeQFunction()
+    player.writeQFunction(options.qfunction)
     if (options.stats) player.printStats()
     System.exit(0)
   })
