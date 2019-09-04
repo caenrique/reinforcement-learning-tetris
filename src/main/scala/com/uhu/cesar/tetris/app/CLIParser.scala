@@ -14,7 +14,7 @@ object CLIParser {
 
   val usage =
     """
-    Usage: program-name [--training] [--stats] [--qfunction filename] [--episodes integer]
+    Usage: program-name [--training [alpha gamma]] [--stats] [--qfunction filename] [--episodes integer]
   """
 
   def apply(args: Array[String]): TetrisOptions = {

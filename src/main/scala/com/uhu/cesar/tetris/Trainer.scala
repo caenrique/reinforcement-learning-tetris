@@ -3,7 +3,7 @@ package com.uhu.cesar.tetris
 import com.uhu.cesar.tetris.Policy.Policy
 import com.uhu.cesar.tetris.QFunction.{QFunctionKey, QFunctionValue}
 
-case class Trainer(alpha2: Double,
+case class Trainer(alpha: Double,
                    gamma: Double,
                    var qf: QFunction,
                    var lastMove: Option[QFunctionKey] = None,
@@ -35,8 +35,6 @@ case class Trainer(alpha2: Double,
     statString
   }
 
-  def alpha = 1 / (2 + Math.sqrt(episode % 100))
-
   def computeNewQValue(reward: Int, potential: QFunctionValue, lastMove: QFunctionKey): QFunctionValue = {
     val lastMoveValue = qf.get(lastMove)
     (1 - alpha) * lastMoveValue + alpha * (reward + gamma * potential)
@@ -47,7 +45,7 @@ case class Trainer(alpha2: Double,
   }
 
   def endOfEpisode(): Unit = {
-    qf = mapLastMove(lastMove, computeNewQValue(-100, 0, _))
+    qf = mapLastMove(lastMove, computeNewQValue(-100, 0d, _))
     episode = episode + 1
   }
 
