@@ -30,6 +30,7 @@ trait Player {
 
     def continueGameLoop(episodes: Option[Int]): Boolean = episodes.forall(ep => currentEpisode <= ep)
 
+    println(episodes)
     closing(new DatagramSocket(RECEIVE_PORT)) { socket =>
       val bufer = Array.ofDim[Byte](1000)
 
