@@ -34,23 +34,21 @@ object QFunction {
 
   val name = "default-qfunction"
 
+  def closing[A, B <: Closeable](c: B)(f: B => A): A = try f(c) finally c.close()
+
   trait QFunctionSerializer {
-    def writeQFunction(qf: QFunction): Unit = {
-      println(s"size of qfunction: ${qf.data.size}")
-      val out = new ObjectOutputStream(new FileOutputStream(name))
-      out.writeObject(qf)
-      out.close()
-      println(s"Saved QFunction as $name")
+    def writeQFunction(qf: QFunction, filename: String = name): Unit = {
+      closing(new ObjectOutputStream(new FileOutputStream(filename))) { out =>
+        out.writeObject(qf)
+      }
+      println(s"Saved QFunction as $filename")
     }
   }
 
   trait QFunctionLoader {
     def loadQFunction(filename: String): QFunction = {
-
-      println(s"loading function $filename")
-      def closing[A, B <: Closeable](c: B)(f: B => A): A = try f(c) finally c.close()
-
       if (new File(filename).exists) {
+        println(s"loading function $filename")
         closing(new ObjectInputStream(new FileInputStream(name))) { fi =>
           fi.readObject().asInstanceOf[QFunction]
         }

@@ -5,15 +5,16 @@ import com.uhu.cesar.tetris.Board.HeuristicValue
 import com.uhu.cesar.tetris.Message.{MessageParser, MovMessage}
 import com.uhu.cesar.tetris.Policy.Policy
 import com.uhu.cesar.tetris.QFunction.{QFunctionSerializer, QFunctionValue}
+import com.uhu.cesar.tetris.app.CLIParser.TrainingOptions
 
-case class QPlayer(training: Boolean, qf: Option[QFunction]) extends Player
+case class QPlayer(training: Boolean, qf: Option[QFunction], ops : TrainingOptions) extends Player
   with MessageParser
   with QFunctionSerializer
   with TetrisStats {
 
   private val trainer = Trainer(
-    0.2f, 0.4f, qf.getOrElse(QFunction.empty), episode = currentEpisode
-  )(Policy.heuristicEGreedy(0.1d))
+    ops.alpha, ops.gamma, qf.getOrElse(QFunction.empty), episode = currentEpisode
+  )(Policy.heuristicEGreedy(epsilon = 0.1d))
 
   override val NAME = "Cesar"
   override val LOGIN = "cesarantonio.enrique"
@@ -42,7 +43,10 @@ case class QPlayer(training: Boolean, qf: Option[QFunction]) extends Player
     Respuesta(action.movement, action.rotation)
   }
 
-  def writeQFunction(): Unit = super.writeQFunction(trainer.qf)
+  def writeQFunction(filename: Option[String]): Unit = {
+    if (filename.isDefined) super.writeQFunction(trainer.qf, filename.get)
+    else super.writeQFunction(trainer.qf)
+  }
 
   def printStats(): Unit = {
     println(s"average moves: ${get_averageMovesPerGame()}, average lines: ${get_averageLinesPerGame()}")
