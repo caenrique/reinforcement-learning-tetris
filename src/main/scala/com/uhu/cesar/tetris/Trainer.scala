@@ -35,7 +35,7 @@ case class Trainer(alpha2: Double,
     statString
   }
 
-  def alpha = 1 / (1 + Math.sqrt(episode) / 10)
+  def alpha = 1 / (2 + Math.sqrt(episode % 100))
 
   def computeNewQValue(reward: Int, potential: QFunctionValue, lastMove: QFunctionKey): QFunctionValue = {
     val lastMoveValue = qf.get(lastMove)
@@ -47,10 +47,10 @@ case class Trainer(alpha2: Double,
   }
 
   def endOfEpisode(): Unit = {
-    qf = mapLastMove(lastMove, _ => 0)
+    qf = mapLastMove(lastMove, computeNewQValue(-100, 0, _))
     episode = episode + 1
   }
 
-  private def reward(rows: Int): Int = if (rows == 0) 0 else if (rows == 1) 1 else if (rows == 2) 3 else if (rows == 3) 5 else 8
+  private def reward(rows: Int): Int = if (rows == 0) 0 else if (rows == 1) 100 else if (rows == 2) 300 else if (rows == 3) 500 else 800
 }
 

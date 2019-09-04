@@ -11,7 +11,7 @@ case class QPlayer(training: Boolean, qf: Option[QFunction]) extends Player
   with QFunctionSerializer {
 
   private val trainer = Trainer(
-    0.2f, 0.8f, qf.getOrElse(QFunction.empty)
+    0.2f, 0.4f, qf.getOrElse(QFunction.empty)
   )(Policy.heuristicEGreedy(0.1d))
 
   override val NAME = "Cesar"
