@@ -36,8 +36,7 @@ object QFunction {
   type QFunctionKey = SimpleBoard
   type QFunctionValue = Double
 
-  // TODO: get this file name from config
-  val name = "qfunction"
+  val name = "default-qfunction"
 
   trait QFunctionSerializer {
     def writeQFunction(qf: QFunction): Unit = {
