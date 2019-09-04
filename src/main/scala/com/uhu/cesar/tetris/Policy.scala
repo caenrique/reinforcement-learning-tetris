@@ -25,17 +25,14 @@ object Policy {
     Random.shuffle(actions).maxBy(_._3)._1
   }
 
-  def eGreedy(epsilon: Double)(episode: Int): Policy = {
+  def eGreedy(epsilon: Double): Policy = {
     if (Random.nextFloat() > epsilon) onPolicy else randomPolicy
   }
 
-  def heuristicEGreedy(epsilon: Double)(episode: Int): Policy = {
+  def heuristicEGreedy(epsilon: Double): Policy = {
     val r = Random.nextFloat()
     if (r < epsilon) heuristicPolicy
     else onPolicy
-
-    heuristicPolicy
-
   }
 
 }
