@@ -12,18 +12,18 @@ case class Trainer(alpha2: Double,
 
   var clearedRows = 0
 
-  def training(board: Board, figure: Figure, rows: Int): Action = {
+  def training(board: Board, figure: Figure, nextFigure: Figure, rows: Int): Action = {
 
-    val simpleBoard = board.simpleProjection
     val bestValue = qf.bestActionValue(board, figure)
     val nextQFunction = mapLastMove(lastMove, computeNewQValue(reward(clearedRows), bestValue, _))
-    val nextMove = QPlayer.play(policy(episode))(nextQFunction, board, figure)
+    val nextMove = QPlayer.play(policy(episode))(nextQFunction, board, figure, nextFigure)
+
+    val simpleBoard = board.simpleProjection(figure, nextMove.rotation)
 
     // UPDATING VARIABLES //
-    lastMove = Some((simpleBoard, figure.symbol, nextMove.movement, nextMove.rotation))
+    lastMove = Some((simpleBoard, nextMove.movement))
     qf = nextQFunction
     clearedRows = clearedRows + rows
-
     ////////////////////////
 
     nextMove

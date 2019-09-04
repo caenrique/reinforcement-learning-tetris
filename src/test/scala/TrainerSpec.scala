@@ -9,8 +9,10 @@ class TrainerSpec extends FlatSpec with Matchers {
 
   "A Trainer" should "compute new qvalue given a move, a reward and a potential" in {
     val nextBoard = Board.emptyBoard.computeNextBoard(Figure(3), Action(-4, 0))
-    val key: QFunctionKey = (Board.simpleEmptyBoard, 3, Movement(-4), Rotation(0))
-    val nextKey: QFunctionKey = (nextBoard.simpleProjection, 3, Movement(4), Rotation(0))
+    val simpleBoard = Board.emptyBoard.simpleProjection(Figure(3), Rotation(0))
+    val nextSimpleBoard = nextBoard.simpleProjection(Figure(3), Rotation(0))
+    val key: QFunctionKey = (simpleBoard, Movement(-4))
+    val nextKey: QFunctionKey = (nextSimpleBoard, Movement(4))
     val qfunction = QFunction(HashMap(key -> 1.0, nextKey -> 2))
     val trainer = Trainer(0.2f, 0.8f, qfunction, None)(Policy.heuristicEGreedy(0.1d))
 

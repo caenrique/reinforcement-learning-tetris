@@ -6,9 +6,11 @@ import com.uhu.cesar.tetris.Figure.FigureSymbol
 
 case class Board(values: Vector[Vector[Int]]) {
 
-  def simpleProjection: SimpleBoard = SimpleBoard(values.map(columnHeight))
+  def simpleProjection(f: Figure, r: Rotation): SimpleBoard = Board.simpleProjection(this, f, r)
 
   def averageHeight: Double = values.map(columnHeight).sum.toDouble / values.length
+
+  def maxHeight: Int = values.map(columnHeight).max
 
   def numberOfHoles: Int = values.map(_.dropWhile(_ == EMPTY).count(_ == EMPTY)).sum
 
@@ -17,6 +19,14 @@ case class Board(values: Vector[Vector[Int]]) {
   def heightDifferences: Int = {
     val h@_ :: rest = values.map(columnHeight).toList
     h.zip(rest).map { case (a, b) => Math.abs(a - b) }.sum
+  }
+
+  def computeNextBoard(figure: Figure): List[Board] = {
+    computeNextBoardWActions(figure).map(_._2)
+  }
+
+  def computeNextBoardWActions(figure: Figure): List[(Action, Board)] = {
+    figure.allMoves.map{ case (m, r) => Action(m, r) -> computeNextBoard(figure, Action(m, r)) }
   }
 
   def computeNextBoard(actions: List[(Figure, Action)]): Board = {
@@ -29,11 +39,15 @@ case class Board(values: Vector[Vector[Int]]) {
     val heights = filterBelowColumns(figure, action).map(columnTopCoord)
 
     var y = heights.min - figure.relativeHeight(action.rotation)
-    while (!grounded(figure, action.rotation, x, y) && y < HEIGHT) {
-      y = y + 1
-    }
 
-    insertFigure(figure, action.rotation, x, y)
+    if (y < 0) this
+    else {
+      while (!grounded(figure, action.rotation, x, y) && y < HEIGHT) {
+        y = y + 1
+      }
+
+      insertFigure(figure, action.rotation, x, y)
+    }
   }
 
   def illegalMove(figure: Figure, action: Action): Boolean = {
@@ -83,7 +97,25 @@ object Board {
 
   type HeuristicValue = Double
 
-  case class SimpleBoard(values: Vector[Int])
+  case class SimpleBoard(values: List[Boolean])
+
+  def simpleProjection(board: Board, figure: Figure, rotation: Rotation): SimpleBoard = {
+    val maxHeight = board.maxHeight
+    val numOfHoles = board.numberOfHoles
+    val completedRows = board.completedRows
+    val newData = figure.moves(rotation).map { move =>
+      val nextBoard = board.computeNextBoard(figure, Action(move, rotation.value))
+      (nextBoard.maxHeight - maxHeight, nextBoard.numberOfHoles - numOfHoles, nextBoard.completedRows - completedRows)
+    }
+
+    val fit = if (newData.exists(_._1 <= 0)) {
+      newData.map { case (dheight, dholes, drows) => dheight <= 1 && dholes == 0 || drows > 0 }
+    } else {
+      newData.map { case (_, dholes, drows) => dholes == 0 || drows > 0 }
+    }
+
+    SimpleBoard(fit)
+  }
 
   val RAW_HEIGHT = 24
   val RAW_WIDTH = 12
@@ -94,7 +126,6 @@ object Board {
   val DEFAULT_COLUMN = 4
 
   val emptyBoard: Board = Board(Vector.tabulate(WIDTH, HEIGHT)((_, _) => 0))
-  val simpleEmptyBoard: SimpleBoard = emptyBoard.simpleProjection
 
   def columnTopCoord: Vector[Int] => Int = _.takeWhile(_ == EMPTY).length
 
