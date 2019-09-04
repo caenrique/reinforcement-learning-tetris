@@ -17,3 +17,6 @@ project/plugins/project/
 
 doc/
 lib/
+
+decompiled-tetris-server/
+qfunction
