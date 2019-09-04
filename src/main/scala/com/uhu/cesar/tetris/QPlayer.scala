@@ -12,7 +12,7 @@ case class QPlayer(training: Boolean, qf: Option[QFunction]) extends Player
   with TetrisStats {
 
   private val trainer = Trainer(
-    0.2f, 0.4f, qf.getOrElse(QFunction.empty)
+    0.2f, 0.4f, qf.getOrElse(QFunction.empty), episode = currentEpisode
   )(Policy.heuristicEGreedy(0.1d))
 
   override val NAME = "Cesar"
@@ -23,7 +23,7 @@ case class QPlayer(training: Boolean, qf: Option[QFunction]) extends Player
   override def restart(): Unit = {
     trainer.endOfEpisode()
     recordEndOfGame()
-    println(trainer.statistics)
+    if(training) println(trainer.statistics)
     start()
   }
 

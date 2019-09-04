@@ -7,7 +7,7 @@ case class Trainer(alpha2: Double,
                    gamma: Double,
                    var qf: QFunction,
                    var lastMove: Option[QFunctionKey] = None,
-                   var episode: Int = 1)
+                   var episode: Int = 0)
                   (policy: Int => Policy) {
 
   var clearedRows = 0
