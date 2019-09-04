@@ -102,15 +102,16 @@ object Board {
   def simpleProjection(board: Board, figure: Figure, rotation: Rotation): SimpleBoard = {
     val maxHeight = board.maxHeight
     val numOfHoles = board.numberOfHoles
+    val completedRows = board.completedRows
     val newData = figure.moves(rotation).map { move =>
       val nextBoard = board.computeNextBoard(figure, Action(move, rotation.value))
-      (nextBoard.maxHeight - maxHeight, nextBoard.numberOfHoles - numOfHoles)
+      (nextBoard.maxHeight - maxHeight, nextBoard.numberOfHoles - numOfHoles, nextBoard.completedRows - completedRows)
     }
 
     val fit = if (newData.exists(_._1 <= 0)) {
-      newData.map { case (dheight, dholes) => dheight <= 1 && dholes == 0 }
+      newData.map { case (dheight, dholes, drows) => dheight <= 1 && dholes == 0 || drows > 0 }
     } else {
-      newData.map { case (_, dholes) => dholes == 0 }
+      newData.map { case (_, dholes, drows) => dholes == 0 || drows > 0 }
     }
 
     SimpleBoard(fit)
