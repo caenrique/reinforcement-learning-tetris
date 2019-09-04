@@ -8,7 +8,7 @@ case class Trainer(alpha: Double,
                    var qf: QFunction,
                    var lastMove: Option[QFunctionKey] = None,
                    var episode: Int = 0)
-                  (policy: Int => Policy) {
+                  (policy: Policy) {
 
   var clearedRows = 0
 
@@ -16,7 +16,7 @@ case class Trainer(alpha: Double,
 
     val bestValue = qf.bestActionValue(board, figure, nextFigure)
     val nextQFunction = mapLastMove(lastMove, computeNewQValue(reward(clearedRows), bestValue, _))
-    val nextMove = QPlayer.play(policy(episode))(nextQFunction, board, figure, nextFigure)
+    val nextMove = QPlayer.play(policy)(nextQFunction, board, figure, nextFigure)
 
     val lastMoveKey = board.computeNextBoard(figure, nextMove).simpleProjection
 
