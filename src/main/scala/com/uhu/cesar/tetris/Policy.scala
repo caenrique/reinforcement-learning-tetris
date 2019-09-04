@@ -31,9 +31,11 @@ object Policy {
 
   def heuristicEGreedy(epsilon: Double)(episode: Int): Policy = {
     val r = Random.nextFloat()
-    if (r < epsilon) randomPolicy
-    else if (r < epsilon + 0.4) heuristicPolicy
+    if (r < epsilon) heuristicPolicy
     else onPolicy
+
+    heuristicPolicy
+
   }
 
 }

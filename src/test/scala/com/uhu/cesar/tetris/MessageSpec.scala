@@ -1,6 +1,7 @@
+package com.uhu.cesar.tetris
+
 import com.uhu.cesar.tetris.Board.BoardParser
 import com.uhu.cesar.tetris.Message.{BadMessage, EndMessage, MovMessage}
-import com.uhu.cesar.tetris.{Board, Message}
 import org.scalatest.{FlatSpec, Matchers}
 
 class MessageSpec extends FlatSpec with Matchers {

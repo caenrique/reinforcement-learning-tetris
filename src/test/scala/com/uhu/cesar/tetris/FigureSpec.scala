@@ -1,5 +1,6 @@
+package com.uhu.cesar.tetris
+
 import com.uhu.cesar.tetris.Action.Rotation
-import com.uhu.cesar.tetris.Figure
 import org.scalatest.{FlatSpec, Matchers}
 
 class FigureSpec extends FlatSpec with Matchers {

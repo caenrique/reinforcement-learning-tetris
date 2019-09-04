@@ -12,15 +12,19 @@ import scala.util.Random
 
 case class QFunction(data: HashMap[QFunctionKey, QFunctionValue]) {
 
-  def get(k: QFunctionKey): QFunctionValue = data.getOrElse(k, Random.nextDouble)
+  def get(k: QFunctionKey): QFunctionValue = data.getOrElse(k, Random.nextDouble * 800)
 
   def update(k: QFunctionKey, v: QFunctionValue): QFunction = QFunction(data.updated(k, v))
 
   def bestActionValue(board: Board, figure: Figure): QFunctionValue = {
-    val searchItems = (0 to 3).flatMap(r => figure.moves(Rotation(r)).map { m => (r, m) })
-    searchItems.map { case (r, m) =>
-      get((board.simpleProjection(figure, Rotation(r)), Movement(m)))
-    }.max
+    board.computeNextBoard(figure).map(board => get(board.simpleProjection)).max
+  }
+
+  def bestActionValue(board: Board, figure: Figure, nextFigure: Figure): QFunctionValue = {
+    board.computeNextBoard(figure)
+      .flatMap(_.computeNextBoard(figure))
+      .map(board => get(board.simpleProjection))
+      .max
   }
 
 }
@@ -29,7 +33,7 @@ object QFunction {
 
   private val DEFAULT_VALUE: QFunctionValue = 0d
 
-  type QFunctionKey = (SimpleBoard, Movement)
+  type QFunctionKey = SimpleBoard
   type QFunctionValue = Double
 
   // TODO: get this file name from config

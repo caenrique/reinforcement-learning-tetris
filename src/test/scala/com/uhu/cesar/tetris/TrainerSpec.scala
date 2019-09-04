@@ -1,6 +1,6 @@
-import com.uhu.cesar.tetris.Action.{Movement, Rotation}
+package com.uhu.cesar.tetris
+
 import com.uhu.cesar.tetris.QFunction.QFunctionKey
-import com.uhu.cesar.tetris._
 import org.scalatest.{FlatSpec, Matchers}
 
 import scala.collection.immutable.HashMap
@@ -9,10 +9,10 @@ class TrainerSpec extends FlatSpec with Matchers {
 
   "A Trainer" should "compute new qvalue given a move, a reward and a potential" in {
     val nextBoard = Board.emptyBoard.computeNextBoard(Figure(3), Action(-4, 0))
-    val simpleBoard = Board.emptyBoard.simpleProjection(Figure(3), Rotation(0))
-    val nextSimpleBoard = nextBoard.simpleProjection(Figure(3), Rotation(0))
-    val key: QFunctionKey = (simpleBoard, Movement(-4))
-    val nextKey: QFunctionKey = (nextSimpleBoard, Movement(4))
+    val simpleBoard = Board.emptyBoard.simpleProjection
+    val nextSimpleBoard = nextBoard.simpleProjection
+    val key: QFunctionKey = simpleBoard
+    val nextKey: QFunctionKey = nextSimpleBoard
     val qfunction = QFunction(HashMap(key -> 1.0, nextKey -> 2))
     val trainer = Trainer(0.2f, 0.8f, qfunction, None)(Policy.heuristicEGreedy(0.1d))
 

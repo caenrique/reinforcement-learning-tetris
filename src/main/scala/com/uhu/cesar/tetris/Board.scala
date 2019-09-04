@@ -6,7 +6,7 @@ import com.uhu.cesar.tetris.Figure.FigureSymbol
 
 case class Board(values: Vector[Vector[Int]]) {
 
-  def simpleProjection(f: Figure, r: Rotation): SimpleBoard = Board.simpleProjection(this, f, r)
+  def simpleProjection: SimpleBoard = Board.simpleProjection(this)
 
   def averageHeight: Double = values.map(columnHeight).sum.toDouble / values.length
 
@@ -62,7 +62,7 @@ case class Board(values: Vector[Vector[Int]]) {
 
   def grounded(f: Figure, r: Rotation, x: Int, y: Int): Boolean = {
     f.coordinates(r.value).exists { case (dx, dy) =>
-      if (dy + y == 21) true else values(dx + x)(dy + y + 1) != EMPTY
+      if (dy + y >= 21) true else values(dx + x)(dy + y + 1) != EMPTY
     }
   }
 
@@ -97,24 +97,10 @@ object Board {
 
   type HeuristicValue = Double
 
-  case class SimpleBoard(values: List[Boolean])
+  case class SimpleBoard(maxHeight: Int, holes: Int)
 
-  def simpleProjection(board: Board, figure: Figure, rotation: Rotation): SimpleBoard = {
-    val maxHeight = board.maxHeight
-    val numOfHoles = board.numberOfHoles
-    val completedRows = board.completedRows
-    val newData = figure.moves(rotation).map { move =>
-      val nextBoard = board.computeNextBoard(figure, Action(move, rotation.value))
-      (nextBoard.maxHeight - maxHeight, nextBoard.numberOfHoles - numOfHoles, nextBoard.completedRows - completedRows)
-    }
-
-    val fit = if (newData.exists(_._1 <= 0)) {
-      newData.map { case (dheight, dholes, drows) => dheight <= 1 && dholes == 0 || drows > 0 }
-    } else {
-      newData.map { case (_, dholes, drows) => dholes == 0 || drows > 0 }
-    }
-
-    SimpleBoard(fit)
+  def simpleProjection(board: Board): SimpleBoard = {
+    SimpleBoard(board.maxHeight - board.completedRows, board.numberOfHoles)
   }
 
   val RAW_HEIGHT = 24

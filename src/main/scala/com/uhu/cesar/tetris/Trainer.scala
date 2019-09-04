@@ -14,14 +14,14 @@ case class Trainer(alpha2: Double,
 
   def training(board: Board, figure: Figure, nextFigure: Figure, rows: Int): Action = {
 
-    val bestValue = qf.bestActionValue(board, figure)
+    val bestValue = qf.bestActionValue(board, figure, nextFigure)
     val nextQFunction = mapLastMove(lastMove, computeNewQValue(reward(clearedRows), bestValue, _))
     val nextMove = QPlayer.play(policy(episode))(nextQFunction, board, figure, nextFigure)
 
-    val simpleBoard = board.simpleProjection(figure, nextMove.rotation)
+    val lastMoveKey = board.computeNextBoard(figure, nextMove).simpleProjection
 
     // UPDATING VARIABLES //
-    lastMove = Some((simpleBoard, nextMove.movement))
+    lastMove = Some(lastMoveKey)
     qf = nextQFunction
     clearedRows = clearedRows + rows
     ////////////////////////

@@ -1,5 +1,6 @@
-import com.uhu.cesar.tetris.Board.{BoardParser, SimpleBoard}
-import com.uhu.cesar.tetris.{Action, Board, Figure}
+package com.uhu.cesar.tetris
+
+import com.uhu.cesar.tetris.Board.BoardParser
 import org.scalatest.{FlatSpec, Matchers}
 
 class BoardSpec extends FlatSpec with Matchers with BoardParser {
