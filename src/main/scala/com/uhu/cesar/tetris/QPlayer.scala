@@ -8,7 +8,8 @@ import com.uhu.cesar.tetris.QFunction.{QFunctionSerializer, QFunctionValue}
 
 case class QPlayer(training: Boolean, qf: Option[QFunction]) extends Player
   with MessageParser
-  with QFunctionSerializer {
+  with QFunctionSerializer
+  with TetrisStats {
 
   private val trainer = Trainer(
     0.2f, 0.4f, qf.getOrElse(QFunction.empty)
@@ -19,11 +20,9 @@ case class QPlayer(training: Boolean, qf: Option[QFunction]) extends Player
 
   override def init(): Unit = {}
 
-  //override def training() = this.training
-
   override def restart(): Unit = {
     trainer.endOfEpisode()
-
+    recordEndOfGame()
     println(trainer.statistics)
     start()
   }
@@ -32,6 +31,9 @@ case class QPlayer(training: Boolean, qf: Option[QFunction]) extends Player
 
     val action = percepcion match {
       case MovMessage(figure, nextFigure, _, clearedRows, board) =>
+        recordMove()
+        if (clearedRows > 0) recordLine(clearedRows)
+
         if (training) trainer.training(board, figure, nextFigure, clearedRows)
         else QPlayer.play(Policy.onPolicy)(qf.getOrElse(QFunction.empty), board, figure, nextFigure)
       case _ => Action(Movement(0), Rotation(0))
@@ -42,6 +44,10 @@ case class QPlayer(training: Boolean, qf: Option[QFunction]) extends Player
 
   def writeQFunction(): Unit = super.writeQFunction(trainer.qf)
 
+  def printStats(): Unit = {
+    println(s"average moves: ${get_averageMovesPerGame()}, average lines: ${get_averageLinesPerGame()}")
+  }
+
 }
 
 object QPlayer {
@@ -49,7 +55,7 @@ object QPlayer {
   def play(policy: Policy)(qFunction: QFunction, board: Board, figure: Figure, nextFigure: Figure): Action = {
 
     def getMoves(board: Board, figure: Figure, nextFigure: Figure): List[(Action, QFunctionValue, HeuristicValue)] = {
-      board.computeNextBoardWActions(figure).map{ case (action, nextBoard) =>
+      board.computeNextBoardWActions(figure).map { case (action, nextBoard) =>
         val qandh = (0 to 3).flatMap(r => nextFigure.moves(Rotation(r)).map(Action(_, r)))
           .map(a => (qvalue(nextBoard, nextFigure, a), hvalue(nextBoard, nextFigure, a))).toList
 

@@ -14,9 +14,11 @@ object Main extends App with QFunctionLoader with QFunctionSerializer {
 
   Signal.handle(new Signal("INT"), _ => {
     player.writeQFunction()
+    if (options.stats) player.printStats()
     System.exit(0)
   })
 
   player.start()
   player.gameLoop(options.episodes)
+  player.printStats()
 }

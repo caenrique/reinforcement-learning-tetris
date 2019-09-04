@@ -4,7 +4,6 @@ import java.io.{Closeable, IOException}
 import java.net.{DatagramPacket, DatagramSocket, InetAddress, SocketException}
 
 import com.uhu.cesar.tetris.Message.{BadMessage, EndMessage, MessageParser, MovMessage}
-import sun.misc.Signal
 
 
 trait Player {
@@ -18,7 +17,9 @@ trait Player {
   val RECEIVE_PORT = 5678
 
   def init(): Unit
+
   def restart(): Unit
+
   def think(perception: Message): Respuesta
 
   def gameLoop(episodes: Option[Int]): Unit = {
