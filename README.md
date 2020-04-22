@@ -1,10 +1,3 @@
----
-title: Jugador de Tetris usando aprendizaje por refuerzo
-author: César Enrique Ramírez
-date: 4 Septiembre 2019
-abstract: "Jugador de tetris que aprende a jugar usando Q-learning. Los resultados obtenidos mejoran a un jugados aleatorio, pero no significativamente"
----
-
 # Introduccion
 
 Hemos desarrollado un jugador de tetris que aprende a jugar utilizando una técnica de aprendizaje por refuerzo. En nuestro caso hemos escogido el algoritmo llamado QLearning. También hemos empleado técnicas heurísticas para ayudar a guiar el entrenamiento, ya que las caracteristicas del problema hacen que sea muy dificil comenzar a aprender.
